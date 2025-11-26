@@ -46,6 +46,13 @@ CREATE TRIGGER trigger_vehicle_cameras_updated_at
 -- usando el endpoint POST /api/camaras/vehicle/{id}/camera
 -- ======================================================
 
+-- Asegurar que existen los vehículos para la demo
+INSERT INTO vehicles (id, code, capacity_kg, status, active)
+VALUES 
+    (1, 'VAN-001', 800, 'active', true),
+    (2, 'VAN-002', 800, 'active', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- Asignar cam1 y cam2 a VAN-001 (vehículo ID 1)
 INSERT INTO vehicle_cameras (vehicle_id, camera_id, camera_name, position, stream_url, active)
 VALUES 
