@@ -11,6 +11,7 @@ class Employee(Base):
     rut = Column(String(32), nullable=True)
     nombre = Column(String(255), nullable=False)
     email = Column(String(255), nullable=True)
+    password = Column(String(255), nullable=True) # Hashed password
     activo = Column(Boolean, default=True)
     role_id = Column(Integer, ForeignKey('roles.id'), nullable=True)
     contract_type_id = Column(Integer, ForeignKey('contract_types.id'), nullable=True)
@@ -124,4 +125,18 @@ class DrivingLog(Base):
     fecha = Column(Date, nullable=False)
     minutos_conduccion = Column(Integer, nullable=False)
     minutos_descanso = Column(Integer, default=0)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+class DeliveryAlert(Base):
+    __tablename__ = 'delivery_alerts'
+    id = Column(Integer, primary_key=True, index=True)
+    delivery_id = Column(Integer, nullable=True)
+    alert_type = Column(String(50), nullable=False)
+    alert_level = Column(String(20), default='info')
+    message = Column(Text, nullable=False)
+    recipient_type = Column(String(50), nullable=False) # 'rrhh_manager', 'conductor'
+    recipient_id = Column(Integer, nullable=True)
+    is_sent = Column(Boolean, default=False)
+    sent_at = Column(TIMESTAMP(timezone=True), nullable=True)
+    read_at = Column(TIMESTAMP(timezone=True), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())

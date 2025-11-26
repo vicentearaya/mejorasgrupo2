@@ -93,13 +93,14 @@ export default function MapView() {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY as string,
     libraries
   })
+
   const [map, setMap] = useState<google.maps.Map | null>(null)
   const [drivers, setDrivers] = useState<Driver[]>([])
   const [selectedDriver, setSelectedDriver] = useState<number | null>(null)
   const [loadingDrivers, setLoadingDrivers] = useState(false)
   const [originPlace, setOriginPlace] = useState<ExtendedPlaceResult | null>(null)
   const [destPlace, setDestPlace] = useState<ExtendedPlaceResult | null>(null)
-  const [route, setRoute] = useState<{coords: google.maps.LatLngLiteral[]; distance_m: number; duration_s: number} | null>(null)
+  const [route, setRoute] = useState<{ coords: google.maps.LatLngLiteral[]; distance_m: number; duration_s: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [requests, setRequests] = useState<RouteRequest[]>([])
   const [waypointsInput, setWaypointsInput] = useState<string>('')
@@ -113,14 +114,14 @@ export default function MapView() {
   // Estado para ruta pendiente de confirmación
   const [pendingRoute, setPendingRoute] = useState<any>(null)
   const [confirmingRoute, setConfirmingRoute] = useState(false)
-  
+
   // Cargar conductores desde la BD al iniciar
   const loadDriversFromDB = async () => {
     try {
       setLoadingDrivers(true)
       console.log('🔄 Cargando empleados desde PostgreSQL...')
-      const res = await axios.get(`${API_URL}/api/rrhh/employees`)
-      
+      const res = await axios.get('/api/rrhh/employees/')
+
       if (res.data && Array.isArray(res.data)) {
         const dbDrivers: Driver[] = res.data.map((d: any) => ({
           id: d.id,
@@ -131,10 +132,10 @@ export default function MapView() {
           rut: d.rut,
           role_name: d.role_name || 'Empleado'
         }))
-        
+
         setDrivers(dbDrivers)
         console.log(`✅ Empleados cargados: ${dbDrivers.length}`, dbDrivers)
-        
+
         // Si hay empleados, seleccionar el primero por defecto
         if (dbDrivers.length > 0 && !selectedDriver) {
           setSelectedDriver(dbDrivers[0].id)
@@ -148,12 +149,12 @@ export default function MapView() {
       setLoadingDrivers(false)
     }
   }
-  
+
   // Cargar conductores al montar el componente
   React.useEffect(() => {
     loadDriversFromDB()
   }, [])
-  
+
   const onLoad = useCallback(function callback(mapInstance: google.maps.Map) {
     setMap(mapInstance)
     setIsMapLoaded(true)
@@ -183,7 +184,7 @@ export default function MapView() {
           // Tomar el primer resultado (el más cercano)
           const place = results[0];
           console.log('Lugar detectado:', place.name, place.place_id);
-          
+
           // Crear información básica del lugar
           const basicPlaceInfo = {
             place_id: place.place_id,
@@ -199,7 +200,7 @@ export default function MapView() {
               }
             }
           };
-          
+
           setSelectedPlaceData(basicPlaceInfo);
           if (place.place_id) {
             setSelectedPlaceId(place.place_id);
@@ -217,7 +218,7 @@ export default function MapView() {
             },
             types: ["point_of_interest"]
           };
-          
+
           setSelectedPlaceData(basicLocationInfo);
           setSelectedPlaceId("custom_location");
         }
@@ -281,8 +282,8 @@ export default function MapView() {
   }
 
   const handleIntermediateStopSelect = (index: number, place: google.maps.places.PlaceResult) => {
-    const extended = { 
-      ...place, 
+    const extended = {
+      ...place,
       formatted_address: place.formatted_address || place.name || '',
       lat: place.geometry?.location?.lat() || 0,
       lng: place.geometry?.location?.lng() || 0
@@ -302,7 +303,7 @@ export default function MapView() {
     try {
       setConfirmingRoute(true)
       console.log('💾 Confirmando y guardando ruta en PostgreSQL...')
-      
+
       const assignPayload = {
         driver_id: pendingRoute.driver_id,
         driver_name: pendingRoute.driver_name,
@@ -315,12 +316,12 @@ export default function MapView() {
           waypoints: pendingRoute.waypoints
         }
       }
-      
+
       const assignRes = await axios.post(API_URL + '/api/routes/assign', assignPayload)
-      
+
       if (assignRes.data.success) {
         console.log('✅ Ruta confirmada y guardada:', assignRes.data.tracking_number)
-        
+
         // Intentar sincronizar con RR.HH. (dinámico)
         try {
           const rrhhPayload = {
@@ -335,14 +336,14 @@ export default function MapView() {
               estimated_start: new Date().toISOString()
             }
           }
-          
+
           await axios.post(API_URL + '/api/rrhh/sync-route', rrhhPayload)
           console.log('✅ Sincronizado con RR.HH.')
         } catch (rrhhError) {
           console.warn('⚠️ No se pudo sincronizar con RR.HH. (servicio no disponible)', rrhhError)
           // No es error crítico - continuar
         }
-        
+
         // Limpiar ruta pendiente
         setPendingRoute(null)
         setError(null)
@@ -350,9 +351,9 @@ export default function MapView() {
       }
     } catch (dbError: any) {
       console.error('❌ Error al confirmar ruta:', dbError)
-      const dbErrorMsg = dbError?.response?.data?.detail 
-        || dbError?.response?.data?.message 
-        || dbError.message 
+      const dbErrorMsg = dbError?.response?.data?.detail
+        || dbError?.response?.data?.message
+        || dbError.message
         || 'Error al guardar en base de datos'
       setError(`Error al confirmar ruta: ${dbErrorMsg}`)
     } finally {
@@ -361,27 +362,16 @@ export default function MapView() {
   }
 
   const computeRoute = async () => {
-    setError(null)
-    
-    // Validaciones específicas con mensajes claros
-    if (!originPlace?.formatted_address) {
-      setError('⚠️ Selecciona una dirección de origen')
-      console.warn('Origen no válido')
+    if (!originPlace || !destPlace) {
       return
     }
-    
-    if (!destPlace?.formatted_address) {
-      setError('⚠️ Selecciona una dirección de destino')
-      console.warn('Destino no válido')
-      return
-    }
-    
+
     if (!selectedDriver && drivers.length === 0) {
       setError('⚠️ Debes asignar un conductor primero')
       console.warn('No hay conductores disponibles')
       return
     }
-    
+
     if (!selectedDriver) {
       setError('⚠️ Selecciona un conductor de la lista')
       console.warn('Conductor no seleccionado')
@@ -389,7 +379,7 @@ export default function MapView() {
     }
 
     const currentDriver = drivers.find(d => d.id === selectedDriver)
-    
+
     if (!currentDriver) {
       setError('⚠️ Conductor no encontrado')
       console.error('Conductor no encontrado con ID:', selectedDriver)
@@ -408,7 +398,7 @@ export default function MapView() {
     const modernWaypoints = intermediateStops
       .filter(stop => stop && stop.formatted_address)
       .map(stop => stop.formatted_address)
-      
+
     const allWaypoints = [...waypoints, ...modernWaypoints]
 
     const payload = {
@@ -435,25 +425,25 @@ export default function MapView() {
         paradas: allWaypoints.length,
         conductor: payload.driverName
       })
-      
+
       const res = await axios.post(API_URL + '/maps/directions', payload)
-      
+
       // Validar respuesta
       if (!res.data) {
         throw new Error('Respuesta vacía del servidor')
       }
-      
+
       const poly = res.data.polyline
       if (!poly || typeof poly !== 'string') {
         throw new Error('Polyline no válido en respuesta')
       }
-      
+
       const coords = decodePolyline(poly)
-      
+
       if (!Array.isArray(coords) || coords.length === 0) {
         throw new Error('No se pudo decodificar la ruta')
       }
-      
+
       const routeInfo = {
         coords,
         distance_m: res.data.distance_m || 0,
@@ -462,12 +452,12 @@ export default function MapView() {
       }
 
       setRoute(routeInfo)
-      console.log(`✓ Ruta calculada: ${(routeInfo.distance_m/1000).toFixed(2)}km, ${Math.round(routeInfo.duration_s/60)}min`)
-      
-      if(coords && coords.length > 0 && map){
+      console.log(`✓ Ruta calculada: ${(routeInfo.distance_m / 1000).toFixed(2)}km, ${Math.round(routeInfo.duration_s / 60)}min`)
+
+      if (coords && coords.length > 0 && map) {
         try {
           const bounds = new window.google.maps.LatLngBounds()
-          coords.forEach((p:any) => {
+          coords.forEach((p: any) => {
             if (p && p.lat && p.lng) {
               bounds.extend({ lat: p.lat, lng: p.lng })
             }
@@ -507,14 +497,14 @@ export default function MapView() {
       console.log('📋 Ruta calculada y lista para confirmar')
       setError(null) // Limpiar errores previos
 
-    } catch(e:any) {
+    } catch (e: any) {
       console.error('❌ Error al calcular ruta:', e)
-      const errorMsg = e?.response?.data?.detail 
-        || e?.response?.data?.message 
-        || e.message 
+      const errorMsg = e?.response?.data?.detail
+        || e?.response?.data?.message
+        || e.message
         || 'Error desconocido al calcular la ruta'
       setError(`Error: ${errorMsg}`)
-      
+
       // Log detallado para debugging
       if (e?.response) {
         console.error('Respuesta del servidor:', {
@@ -536,10 +526,10 @@ export default function MapView() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100%' }}>
+    <div style={{ display: 'flex', height: '100%' }} >
       <div style={{ width: 360, padding: 12, boxSizing: 'border-box' }}>
         <div style={{ marginBottom: '10px' }}>
-          <button 
+          <button
             onClick={addDriver}
             disabled={loadingDrivers}
             className="px-4 py-2 bg-blue-600 text-white rounded border border-blue-700 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -547,10 +537,10 @@ export default function MapView() {
             {loadingDrivers ? '⏳ Cargando...' : '🔄 Recargar Conductores'}
           </button>
           {drivers.length > 0 && (
-            <select 
+            <select
               id="driver-select"
               name="driver"
-              value={selectedDriver || ''} 
+              value={selectedDriver || ''}
               onChange={(e) => setSelectedDriver(Number(e.target.value))}
               className="ml-2.5 px-3 py-2 border border-gray-300 rounded w-full mt-2"
             >
@@ -587,7 +577,7 @@ export default function MapView() {
           ) : null}
 
           <h4>Paradas intermedias (opcional)</h4>
-          
+
           {/* Nueva UI para paradas intermedias */}
           {intermediateStops.map((stop, index) => (
             <div key={index} style={{ display: 'flex', marginBottom: '8px', alignItems: 'center' }}>
@@ -599,8 +589,8 @@ export default function MapView() {
                     placeholder={`Parada ${index + 1}...`}
                   />
                 ) : (
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder={`Parada ${index + 1}...`}
                     style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
                   />
@@ -608,12 +598,12 @@ export default function MapView() {
               </div>
               <button
                 onClick={() => removeIntermediateStop(index)}
-                style={{ 
-                  background: '#ef4444', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '4px', 
-                  padding: '8px', 
+                style={{
+                  background: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '8px',
                   cursor: 'pointer',
                   fontSize: '14px'
                 }}
@@ -623,15 +613,15 @@ export default function MapView() {
               </button>
             </div>
           ))}
-          
+
           <button
             onClick={addIntermediateStop}
-            style={{ 
-              background: '#10b981', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              padding: '8px 12px', 
+            style={{
+              background: '#10b981',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '8px 12px',
               cursor: 'pointer',
               marginBottom: '10px',
               fontSize: '14px'
@@ -639,7 +629,7 @@ export default function MapView() {
           >
             + Agregar parada
           </button>
-          
+
           {/* Textarea legacy para compatibilidad */}
           <details style={{ marginBottom: '10px' }}>
             <summary style={{ cursor: 'pointer', fontSize: '12px', color: '#666' }}>Modo texto (avanzado)</summary>
@@ -653,8 +643,8 @@ export default function MapView() {
             />
           </details>
 
-          <button 
-            onClick={computeRoute} 
+          <button
+            onClick={computeRoute}
             disabled={!originPlace || !destPlace || !selectedDriver || isLoading}
             className="px-4 py-2 bg-blue-600 text-white rounded border border-blue-700 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed mt-2.5 w-full"
           >
@@ -663,8 +653,8 @@ export default function MapView() {
 
           {/* Botón para confirmar y guardar ruta */}
           {pendingRoute && (
-            <button 
-              onClick={confirmRoute} 
+            <button
+              onClick={confirmRoute}
               disabled={confirmingRoute}
               className="px-4 py-2 bg-green-600 text-white rounded border border-green-700 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed mt-2.5 w-full"
               style={{ marginTop: '10px' }}
@@ -690,10 +680,10 @@ export default function MapView() {
           )}
 
           {/* Panel de estado */}
-          <div style={{ 
-            fontSize: '11px', 
-            background: '#f8f9fa', 
-            padding: '8px', 
+          <div style={{
+            fontSize: '11px',
+            background: '#f8f9fa',
+            padding: '8px',
             borderRadius: '4px',
             marginTop: '10px',
             border: '1px solid #e9ecef'
@@ -716,8 +706,8 @@ export default function MapView() {
           </div>
 
           {error && (
-            <div style={{ 
-              color: '#721c24', 
+            <div style={{
+              color: '#721c24',
               background: '#f8d7da',
               border: '1px solid #f5c6cb',
               padding: '10px',
@@ -732,8 +722,8 @@ export default function MapView() {
           {route && (
             <div style={{ marginTop: '10px' }}>
               <h4>Detalles de la ruta:</h4>
-              <p>Distancia: {(route.distance_m/1000).toFixed(2)} km</p>
-              <p>Duración estimada: {Math.round(route.duration_s/60)} minutos</p>
+              <p>Distancia: {(route.distance_m / 1000).toFixed(2)} km</p>
+              <p>Duración estimada: {Math.round(route.duration_s / 60)} minutos</p>
             </div>
           )}
         </div>
@@ -797,7 +787,7 @@ export default function MapView() {
         ) : (
           <div style={{ padding: 16, color: '#666' }}>Cargando mapa…</div>
         )}
-        
+
         {/* Panel de información de lugares */}
         {(selectedPlaceId || selectedPlaceData) && (
           <PlaceInfoPanel
@@ -808,6 +798,6 @@ export default function MapView() {
           />
         )}
       </div>
-    </div>
+    </div >
   )
 }

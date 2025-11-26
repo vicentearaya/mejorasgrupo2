@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
-from .routers import employees, shifts, assignments, trainings, employee_trainings, dynamic_shifts
+from .routers import employees, shifts, assignments, trainings, employee_trainings, dynamic_shifts, auth
 from .alert_service import router as alert_router
 
 app = FastAPI(title='ms-rrhh')
@@ -27,6 +27,7 @@ class UTF8Middleware(BaseHTTPMiddleware):
 app.add_middleware(UTF8Middleware)
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(employees.router, prefix='/employees', tags=['employees'])
 app.include_router(shifts.router, prefix='/shifts', tags=['shifts'])
 app.include_router(assignments.router, prefix='/assignments', tags=['assignments'])

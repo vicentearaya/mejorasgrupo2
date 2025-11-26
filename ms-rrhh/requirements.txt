@@ -9,3 +9,6 @@ prometheus-client
 python-dotenv
 structlog
 httpx
+bcrypt
+python-jose[cryptography]
+python-multipart

@@ -159,6 +159,53 @@ def get_db():
         db.close()
 
 # ------------------------------------------------------
+# PROXIES HACIA MS-RRHH
+# ------------------------------------------------------
+
+@app.api_route("/api/rrhh/{path_name:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_rrhh(path_name: str, request: Request):
+    """Proxy genérico para ms-rrhh"""
+    base = os.environ.get("MS_RRHH_URL") or "http://ms-rrhh:8000"
+    
+    # Construir URL destino
+    url = f"{base}/{path_name}"
+    query_params = request.url.query
+    if query_params:
+        url += f"?{query_params}"
+        
+    try:
+        async with httpx.AsyncClient() as client:
+            # Forward headers (excluding host to avoid confusion)
+            headers = dict(request.headers)
+            headers.pop("host", None)
+            headers.pop("content-length", None) 
+            
+            content = await request.body()
+            
+            r = await client.request(
+                method=request.method,
+                url=url,
+                headers=headers,
+                content=content,
+                timeout=30.0
+            )
+            
+        # Return response
+        return Response(
+            content=r.content,
+            status_code=r.status_code,
+            headers=dict(r.headers)
+        )
+            
+    except httpx.RequestError as e:
+        logging.error(f"ms-rrhh proxy error: {e}")
+        return JSONResponse(status_code=502, content={"error": "ms_rrhh_unreachable", "detail": str(e)})
+    except Exception as e:
+        logging.error(f"ms-rrhh proxy unexpected error: {e}")
+        return JSONResponse(status_code=500, content={"error": "internal_proxy_error", "detail": str(e)})
+
+
+# ------------------------------------------------------
 # PROXIES HACIA MS-INVENTARIO (MANTENCIONES)
 # ------------------------------------------------------
 

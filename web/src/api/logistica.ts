@@ -1,6 +1,6 @@
 const API_LOG =
-  import.meta.env.VITE_API_URL ||
-  `${location.protocol}//${location.hostname}:8000`;  // ✅ Usar Gateway en lugar de ms-logistica
+  import.meta.env.VITE_API_LOGISTICA ||
+  '/api/logistica'; // ✅ Usar proxy Nginx para evitar CORS
 
 export type DeliveryRequest = {
   id: number;
@@ -41,7 +41,7 @@ export async function postIncident(payload: IncidentCreate): Promise<IncidentOut
   });
   if (!res.ok) {
     let detail = '';
-    try { detail = await res.text(); } catch {}
+    try { detail = await res.text(); } catch { }
     throw new Error('Error al registrar incidente: ' + detail);
   }
   return res.json();
@@ -53,13 +53,13 @@ export type IncidentsFilter = {
   route_stop_id?: number;
   vehicle_id?: number;
   driver_id?: number;
-  severity?: 'low'|'medium'|'high';
+  severity?: 'low' | 'medium' | 'high';
   type?: string;
   created_from?: string; // ISO
   created_to?: string;   // ISO
   limit?: number;
   offset?: number;
-  order?: 'asc'|'desc';
+  order?: 'asc' | 'desc';
 };
 
 export async function getIncidents(filter: IncidentsFilter = {}): Promise<IncidentOut[]> {

@@ -43,49 +43,123 @@ export default function InventoryPage() {
     setBodegaId(Number(e.target.value));
   };
 
+  const handleIncrement = async (productoId: number) => {
+    await postMovement(productoId, bodegaId, -1); // Negative for IN
+    await loadData(bodegaId);
+  };
+
+  const handleDecrement = async (productoId: number) => {
+    await postMovement(productoId, bodegaId, 1); // Positive for OUT
+    await loadData(bodegaId);
+  };
+
+  const getQuantityClass = (cantidad: number) => {
+    if (cantidad === 0) return styles.quantityZero;
+    if (cantidad <= 5) return styles.quantityLow;
+    return styles.quantityNormal;
+  };
+
   return (
     <div className={styles.root}>
-      <h2>Inventario por Bodega</h2>
-      <div className={styles.headerBar}>
-        <label htmlFor="bodegaSel">Bodega:</label>
-        <select id="bodegaSel" value={bodegaId} onChange={onChangeBodega}>
-          {BODEGAS.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
-        </select>
-        <button onClick={() => loadData(bodegaId)} disabled={loading}>Actualizar</button>
-        <span>{loading ? 'Cargando…' : `SKUs: ${totalSKUs}`}</span>
-        <span style={{ marginLeft: 'auto' }}>
-          <strong>Alertas: </strong>
-          <span className={`${styles.badge} ${alertCount > 0 ? styles.badgeAlert : ''}`}>{alertCount}</span>
-        </span>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.title}>📦 Gestión de Inventario</h1>
+        <p className={styles.subtitle}>Control de stock por bodega en tiempo real</p>
       </div>
-      {error && <p className={styles.error}>{error}</p>}
-      <table className={styles.table}>
-        <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Producto</th>
-          <th>Cantidad</th>
-          <th>Acciones (demo)</th>
-        </tr>
-        </thead>
-        <tbody>
-        {items.map(it => (
-          <tr key={it.producto_id}>
-            <td>{it.sku ?? '—'}</td>
-            <td>{it.nombre ?? '—'}</td>
-            <td style={{ textAlign: 'center' }}>{it.cantidad}</td>
-            <td className={styles.actions}>
-              <button onClick={async () => { await postMovement(it.producto_id, bodegaId, 1); await loadData(bodegaId); }} disabled={loading}>
-                -1 (OUT)
-              </button>
-            </td>
-          </tr>
-        ))}
-        {items.length === 0 && !loading && (
-          <tr><td colSpan={4} className={styles.empty}>Sin datos</td></tr>
-        )}
-        </tbody>
-      </table>
+
+      <div className={styles.controlCard}>
+        <div className={styles.controlGroup}>
+          <label htmlFor="bodegaSel" className={styles.label}>
+            <span className={styles.labelIcon}>🏢</span>
+            Bodega:
+          </label>
+          <select id="bodegaSel" value={bodegaId} onChange={onChangeBodega} className={styles.select}>
+            {BODEGAS.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+          </select>
+        </div>
+
+        <button onClick={() => loadData(bodegaId)} disabled={loading} className={styles.refreshButton}>
+          <span className={styles.buttonIcon}>🔄</span>
+          {loading ? 'Actualizando...' : 'Actualizar'}
+        </button>
+
+        <div className={styles.statsGroup}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Total SKUs</span>
+            <span className={styles.statValue}>{totalSKUs}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Alertas</span>
+            <span className={`${styles.statValue} ${styles.badge} ${alertCount > 0 ? styles.badgeAlert : styles.badgeSuccess}`}>
+              {alertCount}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className={styles.errorCard}>
+          <span className={styles.errorIcon}>⚠️</span>
+          {error}
+        </div>
+      )}
+
+      <div className={styles.tableCard}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, index) => (
+              <tr key={it.producto_id} className={index % 2 === 0 ? styles.rowEven : styles.rowOdd}>
+                <td>
+                  <span className={styles.skuBadge}>{it.sku ?? '—'}</span>
+                </td>
+                <td className={styles.productName}>{it.nombre ?? '—'}</td>
+                <td>
+                  <span className={`${styles.quantityBadge} ${getQuantityClass(it.cantidad)}`}>
+                    {it.cantidad}
+                  </span>
+                </td>
+                <td className={styles.actions}>
+                  <button
+                    onClick={() => handleIncrement(it.producto_id)}
+                    disabled={loading}
+                    className={styles.incrementButton}
+                    title="Agregar 1 unidad"
+                  >
+                    <span className={styles.buttonIcon}>➕</span>
+                    +1
+                  </button>
+                  <button
+                    onClick={() => handleDecrement(it.producto_id)}
+                    disabled={loading}
+                    className={styles.decrementButton}
+                    title="Quitar 1 unidad"
+                  >
+                    <span className={styles.buttonIcon}>➖</span>
+                    -1
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {items.length === 0 && !loading && (
+              <tr>
+                <td colSpan={4} className={styles.empty}>
+                  <div className={styles.emptyState}>
+                    <span className={styles.emptyIcon}>📭</span>
+                    <p>No hay productos en esta bodega</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

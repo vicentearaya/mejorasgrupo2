@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 import os
 
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+psycopg2://lux:luxpass@postgres:5432/erp')
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+psycopg2://lux:luxpass@localhost:5432/erp')
 
 # Configurar engine con UTF-8 garantizado
 engine = create_engine(
@@ -27,3 +27,10 @@ def receive_connect(dbapi_conn, connection_record):
         pass
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

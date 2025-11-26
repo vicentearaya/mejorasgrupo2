@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from .routes import router as maps_router
-from .routes_routes import router as routes_router
+from .routes import router as routes_router
 from .delivery_service import router as delivery_router
 import structlog  # type: ignore[reportMissingImports]
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST  # type: ignore[reportMissingImports]
@@ -24,25 +24,19 @@ app.include_router(delivery_router, tags=["deliveries"])
 # For dev/MVP, ensure tables exist
 try:
     Base.metadata.create_all(bind=engine)
-except Exception:
+except Exception as e:
+    logging.error(f"Error creating tables: {e}")
     # best-effort; log will be handled by global exception handler if needed
     pass
 
 # CORS for local development (all localhost ports)
 app.add_middleware(
     CORSMiddleware,
-    # Allow all localhost ports for development
-    allow_origins=[
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:8080",  # Docker web container
-        "http://localhost:3000",  # Common dev port
-    ],
-    allow_origin_regex=r"https?://(localhost|127\\.0\\.1|0\\.0\\.0\\.0):[0-9]+",
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 # Middleware para garantizar UTF-8 en todas las respuestas
 class UTF8Middleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):

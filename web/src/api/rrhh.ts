@@ -5,8 +5,20 @@ const API_RRHH = import.meta.env.VITE_API_RRHH || 'http://localhost:8000/api/rrh
 
 // Helper function to handle fetch errors silently (service may not be running)
 async function safeFetch(url: string, options?: RequestInit): Promise<Response> {
+  const token = localStorage.getItem('token');
+  const headers = new Headers(options?.headers);
+
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  const newOptions = {
+    ...options,
+    headers
+  };
+
   try {
-    return await fetch(url, options);
+    return await fetch(url, newOptions);
   } catch (error) {
     // Silently ignore connection errors - service may not be available
     console.warn(`[RR.HH. API] Service unavailable: ${url}`);
@@ -68,7 +80,7 @@ export type ShiftAssignmentCreate = {
 // ========== Employees ==========
 
 export async function getEmployees(): Promise<Employee[]> {
-  const res = await safeFetch(`${API_RRHH}/employees`);
+  const res = await safeFetch(`${API_RRHH}/employees/`);
   if (!res || !res.ok) return [];
   return res.json();
 }
@@ -107,7 +119,7 @@ export async function deleteEmployee(id: number): Promise<boolean> {
 // ========== Shifts ==========
 
 export async function getShifts(): Promise<Shift[]> {
-  const res = await safeFetch(`${API_RRHH}/shifts`);
+  const res = await safeFetch(`${API_RRHH}/shifts/`);
   if (!res || !res.ok) return [];
   return res.json();
 }
@@ -159,7 +171,7 @@ export async function listAssignments(params?: {
   from?: string; // YYYY-MM-DD
   to?: string;   // YYYY-MM-DD
 }): Promise<ShiftAssignment[]> {
-  const url = new URL(`${API_RRHH}/assignments`);
+  const url = new URL(`${API_RRHH}/assignments/`, window.location.origin);
   if (params?.employee_id) url.searchParams.set('employee_id', params.employee_id.toString());
   if (params?.from) url.searchParams.set('from', params.from);
   if (params?.to) url.searchParams.set('to', params.to);
@@ -354,9 +366,9 @@ export async function getAvailableDrivers(dynamicShiftId: number): Promise<Avail
 }
 
 export async function autoAssignDriver(dynamicShiftId: number, employeeId: number): Promise<DynamicShift> {
-  const url = new URL(`${API_RRHH}/dynamic-shifts/${dynamicShiftId}/auto-assign`);
+  const url = new URL(`${API_RRHH}/dynamic-shifts/${dynamicShiftId}/auto-assign`, window.location.origin);
   url.searchParams.set('employee_id', employeeId.toString());
-  
+
   const res = await safeFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }
@@ -397,7 +409,7 @@ export async function listDynamicShifts(params?: {
   fecha_hasta?: string;
   status?: string;
 }): Promise<DynamicShift[]> {
-  const url = new URL(`${API_RRHH}/dynamic-shifts`);
+  const url = new URL(`${API_RRHH}/dynamic-shifts/`, window.location.origin);
   if (params?.fecha_desde) url.searchParams.set('fecha_desde', params.fecha_desde);
   if (params?.fecha_hasta) url.searchParams.set('fecha_hasta', params.fecha_hasta);
   if (params?.status) url.searchParams.set('status', params.status);
