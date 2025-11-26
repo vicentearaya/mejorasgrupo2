@@ -120,13 +120,20 @@ services:
       start_period: 20s
 
   web:
-    build: ../web
+    build:
+      context: ../web
+      args:
+        VITE_API_RRHH: "/api/rrhh"
+        VITE_API_URL: ""
+        VITE_GOOGLE_MAPS_API_KEY: "dummy_key_for_dev"
+        VITE_API_INVENTARIO: "http://localhost:8002"
+        VITE_API_LOGISTICA: ""
     env_file: ../web/.env
     environment:
       # Permite sobreescribir desde entorno host si se desea
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
       VITE_API_INVENTARIO: ${VITE_API_INVENTARIO:-http://localhost:8002}
-      VITE_API_LOGISTICA: ${VITE_API_LOGISTICA:-http://localhost:8001}
+      VITE_API_LOGISTICA: "" # Use relative path /api/logistica via Nginx
       VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY}
     ports:
       - "8080:80"

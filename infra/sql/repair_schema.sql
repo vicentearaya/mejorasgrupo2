@@ -1,0 +1,14 @@
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS origin_address TEXT;
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS destination_address TEXT;
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS origin_lat NUMERIC(10, 8);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS origin_lng NUMERIC(11, 8);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS dest_lat NUMERIC(10, 8);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS dest_lng NUMERIC(11, 8);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS customer_name VARCHAR(255);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS customer_phone VARCHAR(20);
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0;
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS vehicle_id INTEGER;
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS driver_id INTEGER;
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE delivery_requests ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
