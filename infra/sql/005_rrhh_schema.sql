@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS employees (
     rut VARCHAR(32),
     nombre VARCHAR(255) NOT NULL,
     email VARCHAR(255),
+    password VARCHAR(255),
     activo BOOLEAN DEFAULT TRUE,
     role_id INTEGER REFERENCES roles(id),
     contract_type_id INTEGER REFERENCES contract_types(id),
