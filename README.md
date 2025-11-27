@@ -49,7 +49,7 @@ curl http://localhost:8000/deliveries  # Should return 200 + UTF-8 names
 	docker compose up -d --build gateway ms-inventario ms-logistica web
 	```
 5. Verificar endpoints:
-	- Frontend: http://localhost:5173
+	- Frontend: http://localhost:8080
 	- Gateway: http://localhost:8000/health
 	- Inventario: http://localhost:8002/health
 	- Logística: http://localhost:8001/health
@@ -165,6 +165,18 @@ docker exec infra-ms-inventario-1 python -m unittest tests/test_stock_adjustment
 ```powershell
 docker exec infra-ms-inventario-1 python -m unittest tests/test_alerts.py
 ```
+
+### 🔐 Credenciales de Prueba (Login)
+
+Si estás en una instalación limpia (fresh install), utiliza estas credenciales por defecto:
+
+| Usuario | Contraseña |
+|---------|------------|
+| `juan.perez@logistica.cl` | `admin` |
+| `maria.garcia@logistica.cl` | `admin` |
+| `carlos.lopez@logistica.cl` | `admin` |
+
+> **Nota:** Si estás en un entorno antiguo donde no se ha recreado el volumen de la base de datos, la contraseña podría ser `123456`.
 
 ---
 ## 🧪 Smoke Test rápido
