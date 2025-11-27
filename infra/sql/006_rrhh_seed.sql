@@ -16,10 +16,10 @@ INSERT INTO shifts (tipo, start_time, end_time, timezone) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Optional: Create a test employee
-INSERT INTO employees (rut, nombre, email, activo) VALUES
-('12345678-9', 'Juan Pérez', 'juan.perez@logistica.cl', TRUE),
-('98765432-1', 'María García', 'maria.garcia@logistica.cl', TRUE),
-('55555555-5', 'Carlos López', 'carlos.lopez@logistica.cl', TRUE)
+INSERT INTO employees (rut, nombre, email, password, activo) VALUES
+('12345678-9', 'Juan Pérez', 'juan.perez@logistica.cl', '$2b$12$TAkciKam6b86ACnjHi9JhOgse/HUmIIaRE4MGP2piU69PtG.9tLuS', TRUE),
+('98765432-1', 'María García', 'maria.garcia@logistica.cl', '$2b$12$TAkciKam6b86ACnjHi9JhOgse/HUmIIaRE4MGP2piU69PtG.9tLuS', TRUE),
+('55555555-5', 'Carlos López', 'carlos.lopez@logistica.cl', '$2b$12$TAkciKam6b86ACnjHi9JhOgse/HUmIIaRE4MGP2piU69PtG.9tLuS', TRUE)
 ON CONFLICT DO NOTHING;
 
 COMMIT;
