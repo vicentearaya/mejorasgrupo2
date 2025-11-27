@@ -145,6 +145,28 @@ npm run dev
 Se puede añadir instrumentación `/metrics` en iteraciones siguientes si se requiere.
 
 ---
+## 🧪 Testing
+
+### Pruebas Unitarias (Backend)
+
+Para ejecutar las pruebas unitarias de los microservicios, utiliza los siguientes comandos (asegúrate de que los contenedores estén corriendo):
+
+**1. Login (ms-rrhh)**
+```powershell
+docker exec infra-ms-rrhh-1 python -m unittest tests/test_login_unittest.py
+```
+
+**2. Ajustes de Stock (ms-inventario)**
+```powershell
+docker exec infra-ms-inventario-1 python -m unittest tests/test_stock_adjustments.py
+```
+
+**3. Alertas (ms-inventario)**
+```powershell
+docker exec infra-ms-inventario-1 python -m unittest tests/test_alerts.py
+```
+
+---
 ## 🧪 Smoke Test rápido
 
 ```powershell
